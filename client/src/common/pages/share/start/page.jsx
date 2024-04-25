@@ -8,8 +8,9 @@ import { SocketContext } from "../../../../utils/Context";
 const Page = () => {
   const [roomId, setRoomId] = useState();
   const API_URL = import.meta.env.VITE_API_URL;
-  const { setSocket } = useContext(SocketContext);
   const [videoStream, setVideoStream] = useState(null);
+  var socket;
+  var interval;
 
   const captureScreen = (socket, roomId) => {
     const canvas = document.createElement("canvas");
@@ -21,7 +22,7 @@ const Page = () => {
         cursor: "always",
         displaySurface: "window",
         logicalSurface: true,
-        frameRate: 10,
+        frameRate: 120,
         width: window.innerWidth,
         height: window.innerHeight,
       },
@@ -35,13 +36,13 @@ const Page = () => {
         video.play();
 
         // Capture frames and send to server
-        setInterval(() => {
+        interval = setInterval(() => {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           const imageData = canvas.toDataURL("image/jpeg");
           socket.emit("stream-frame", { roomId, frameData: imageData });
-        }, 10); // Adjust interval as needed
+        }, 100); // Adjust interval as needed
       })
       .catch((error) => {
         console.error("Error capturing screen:", error);
@@ -49,19 +50,17 @@ const Page = () => {
   };
 
   useEffect(() => {
-    const socket = io(API_URL);
-    setSocket(socket);
-    const roomId = uuid();
-    setRoomId(roomId);
-    socket.on("connect", () => {
-      console.log("connected to server");
+    if (!socket) {
+      socket = io(API_URL);
+      const roomId = uuid();
+      setRoomId(roomId);
+      socket.on("connect", () => {
+        console.log("connected to server");
+      });
       socket.emit("join-message", roomId);
       captureScreen(socket, roomId);
-    });
 
-    return () => {
-      socket.disconnect();
-    };
+    }
   }, []);
 
   return (

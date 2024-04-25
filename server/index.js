@@ -23,3 +23,7 @@ const io = new Server ( server , {
 require('./socket')(io);
 
 app.use('/api' , allRoutes);
+
+app.get('/',(req,res)=>{
+    res.send('Server working correctly!');
+})
