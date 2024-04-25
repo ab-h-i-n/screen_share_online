@@ -9,10 +9,10 @@ const Page = () => {
   const roomId = useLocation().search.split("=")[1];
   const API_URL = import.meta.env.VITE_API_URL;
   const { socket } = useContext(SocketContext);
+  var newSocket;
 
   useEffect(() => {
-    let newSocket;
-    if (!socket) {
+    if (!newSocket) {
       newSocket = io(API_URL);
       newSocket.on("connect", () => {
         console.log("connected to server");
@@ -21,19 +21,8 @@ const Page = () => {
       newSocket.on("stream-frame", (frameData) => {
         setImg(frameData);
       });
-    } else {
-      socket.emit("join-message", roomId);
-      socket.on("stream-frame", (frameData) => {
-        setImg(frameData);
-      });
     }
-
-    return () => {
-      if (newSocket) {
-        newSocket.disconnect();
-      }
-    };
-  }, [roomId, socket]);
+  }, []);
 
   return (
     <div className="grid">

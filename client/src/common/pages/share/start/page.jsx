@@ -3,7 +3,6 @@ import Button from "../../../components/Button";
 import { IoMdShare } from "react-icons/io";
 import { io } from "socket.io-client";
 import uuid from "react-uuid";
-import { SocketContext } from "../../../../utils/Context";
 
 const Page = () => {
   const [roomId, setRoomId] = useState();
@@ -11,6 +10,7 @@ const Page = () => {
   const [videoStream, setVideoStream] = useState(null);
   var socket;
   var interval;
+  const [members, setMembers] = useState(0);
 
   const captureScreen = (socket, roomId) => {
     const canvas = document.createElement("canvas");
@@ -54,12 +54,18 @@ const Page = () => {
       socket = io(API_URL);
       const roomId = uuid();
       setRoomId(roomId);
+
       socket.on("connect", () => {
         console.log("connected to server");
       });
+
       socket.emit("join-message", roomId);
       captureScreen(socket, roomId);
 
+      socket.on("set-member", (numMembers) => {
+        console.log("new member joined", numMembers);
+        setMembers(numMembers);
+      });
     }
   }, []);
 
@@ -77,18 +83,18 @@ const Page = () => {
       </div>
       {/* video container */}
       <div>
-        {videoStream && (
+        {videoStream ? (
           <video
             className="w-full h-full"
-            ref={(videoRef) => (videoRef.srcObject = videoStream)}
+            ref={(videoRef) => videoRef && (videoRef.srcObject = videoStream)}
             autoPlay
           />
-        )}
+        ) : null}
       </div>
       {/* number of members joined */}
       <div className="bg-green-600 p-3 font-medium text-white">
         <span>Members Joined : </span>
-        <span>32</span>
+        <span>{members}</span>
       </div>
       {/* leave room */}
       <div className="fixed top-7 right-5">
